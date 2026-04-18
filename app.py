@@ -132,7 +132,7 @@ def produto(id):
     return render_template('produto.html', produto=produto)
 
 # =========================
-# ESTOQUE (NOVA ROTA)
+# ESTOQUE CADASTRO
 # =========================
 
 @app.route('/estoque/cadastrar', methods=['GET', 'POST'])
@@ -177,6 +177,24 @@ def cadastrar_produto():
         return redirect(url_for('vendas'))
 
     return render_template('cadastrar_produto.html')
+
+# =========================
+# ESTOQUE LISTAGEM (NOVA ROTA)
+# =========================
+
+@app.route('/estoque')
+def estoque():
+    if 'user' not in session:
+        return redirect(url_for('login'))
+
+    filtro = request.args.get('modelo')
+
+    if filtro:
+        produtos = Product.query.filter(Product.modelo.like(f"%{filtro}%")).all()
+    else:
+        produtos = Product.query.all()
+
+    return render_template('estoque.html', produtos=produtos)
 
 # =========================
 # PROTEÇÃO FINANCEIRO
