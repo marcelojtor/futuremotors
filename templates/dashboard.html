@@ -22,7 +22,6 @@
             font-family: Arial, sans-serif;
         }
 
-        /* SIDEBAR */
         .sidebar {
             width: 250px;
             height: 100vh;
@@ -47,13 +46,11 @@
             margin-right: 10px;
         }
 
-        /* CONTENT */
         .content {
             margin-left: 250px;
             padding: 20px;
         }
 
-        /* TOPBAR */
         .topbar {
             display: flex;
             justify-content: space-between;
@@ -92,7 +89,6 @@
             background: #222;
         }
 
-        /* CARDS */
         .card-dashboard {
             background: #111;
             border-radius: 10px;
@@ -106,7 +102,6 @@
             transform: scale(1.02);
         }
 
-        /* RESPONSIVO */
         @media (max-width: 768px) {
             .sidebar {
                 left: -250px;
@@ -131,20 +126,18 @@
 
 <!-- SIDEBAR -->
 <div class="sidebar" id="sidebar">
-    <a href="#"><i class="fas fa-chart-line"></i> Dashboard</a>
-    <a href="#"><i class="fas fa-shopping-cart"></i> Vendas</a>
-    <a href="#"><i class="fas fa-box"></i> Estoque</a>
-    <a href="#"><i class="fas fa-tools"></i> Oficina</a>
+    <a href="/dashboard"><i class="fas fa-chart-line"></i> Dashboard</a>
+    <a href="/vendas"><i class="fas fa-shopping-cart"></i> Vendas</a>
+    <a href="/estoque"><i class="fas fa-box"></i> Estoque</a>
+    <a href="/oficina"><i class="fas fa-tools"></i> Oficina</a>
     <a href="/financeiro_login"><i class="fas fa-dollar-sign"></i> Financeiro</a>
-    <a href="#"><i class="fas fa-users"></i> Clientes</a>
+    <a href="/clientes"><i class="fas fa-users"></i> Clientes</a>
     <a href="#"><i class="fas fa-bullhorn"></i> Marketing</a>
     <a href="#"><i class="fas fa-cog"></i> Configurações</a>
 </div>
 
-<!-- CONTENT -->
 <div class="content">
 
-    <!-- TOPBAR -->
     <div class="topbar">
         <span class="menu-toggle" onclick="toggleMenu()">
             <i class="fas fa-bars"></i>
@@ -164,7 +157,6 @@
         </div>
     </div>
 
-    <!-- CARDS -->
     <div class="row g-4">
 
         <div class="col-md-3">
@@ -197,7 +189,6 @@
 
     </div>
 
-    <!-- GRÁFICO -->
     <div class="mt-5">
         <canvas id="grafico"></canvas>
     </div>
