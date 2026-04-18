@@ -39,10 +39,9 @@ class Product(db.Model):
     imagem = db.Column(db.String(200))
 
 # =========================
-# CRIAR BANCO E USUÁRIO PADRÃO
+# CRIAR BANCO E USUÁRIO PADRÃO (CORRIGIDO)
 # =========================
-@app.before_first_request
-def create_tables():
+with app.app_context():
     db.create_all()
 
     if not User.query.filter_by(username='ADM').first():
@@ -101,7 +100,7 @@ def dashboard():
     return render_template('dashboard.html', user=session['user'], role=session['role'])
 
 # =========================
-# VENDAS (NOVA ROTA)
+# VENDAS
 # =========================
 
 @app.route('/vendas')
