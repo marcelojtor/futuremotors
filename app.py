@@ -101,6 +101,18 @@ def dashboard():
     return render_template('dashboard.html', user=session['user'], role=session['role'])
 
 # =========================
+# VENDAS (NOVA ROTA)
+# =========================
+
+@app.route('/vendas')
+def vendas():
+    if 'user' not in session:
+        return redirect(url_for('login'))
+
+    produtos = Product.query.all()
+    return render_template('vendas.html', produtos=produtos)
+
+# =========================
 # PROTEÇÃO FINANCEIRO
 # =========================
 
