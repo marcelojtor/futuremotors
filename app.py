@@ -112,6 +112,18 @@ def vendas():
     return render_template('vendas.html', produtos=produtos)
 
 # =========================
+# PRODUTO (NOVA ROTA)
+# =========================
+
+@app.route('/produto/<int:id>')
+def produto(id):
+    if 'user' not in session:
+        return redirect(url_for('login'))
+
+    produto = Product.query.get_or_404(id)
+    return render_template('produto.html', produto=produto)
+
+# =========================
 # PROTEÇÃO FINANCEIRO
 # =========================
 
