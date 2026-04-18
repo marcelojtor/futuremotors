@@ -14,7 +14,7 @@ app.secret_key = 'super_secret_key_change_this'
 UPLOAD_FOLDER = 'static/uploads'
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 
-# Banco SQLite (pronto para migrar para PostgreSQL)
+# Banco SQLite
 BASE_DIR = os.path.abspath(os.path.dirname(__file__))
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///' + os.path.join(BASE_DIR, 'database.db')
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
@@ -22,7 +22,7 @@ app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 db = SQLAlchemy(app)
 
 # =========================
-# MODELOS DO BANCO
+# MODELOS
 # =========================
 
 class User(db.Model):
@@ -43,7 +43,6 @@ class Product(db.Model):
     velocidade = db.Column(db.String(50))
     imagem = db.Column(db.String(200))
 
-# NOVO MODEL - OFICINA
 class Service(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     modelo = db.Column(db.String(100))
@@ -55,8 +54,16 @@ class Service(db.Model):
     valor_total = db.Column(db.Float)
     status = db.Column(db.String(50))
 
+# NOVO MODEL FINANCEIRO
+class Finance(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    tipo = db.Column(db.String(20))  # entrada / saida
+    descricao = db.Column(db.String(200))
+    valor = db.Column(db.Float)
+    data = db.Column(db.String(20))
+
 # =========================
-# CRIAR BANCO E USUÁRIO PADRÃO (CORRIGIDO)
+# INIT BANCO
 # =========================
 with app.app_context():
     db.create_all()
@@ -65,41 +72,36 @@ with app.app_context():
         os.makedirs(UPLOAD_FOLDER)
 
     if not User.query.filter_by(username='ADM').first():
-        user = User(
+        db.session.add(User(
             username='ADM',
             password=generate_password_hash('123456'),
             role='Administrador'
-        )
-        db.session.add(user)
+        ))
 
     if not User.query.filter_by(username='ADM1').first():
-        user2 = User(
+        db.session.add(User(
             username='ADM1',
             password=generate_password_hash('123456'),
             role='Financeiro'
-        )
-        db.session.add(user2)
+        ))
 
     db.session.commit()
 
 # =========================
-# ROTAS DE LOGIN
+# LOGIN
 # =========================
 
 @app.route('/', methods=['GET', 'POST'])
 def login():
     if request.method == 'POST':
-        username = request.form['username']
-        password = request.form['password']
+        user = User.query.filter_by(username=request.form['username']).first()
 
-        user = User.query.filter_by(username=username).first()
-
-        if user and check_password_hash(user.password, password):
+        if user and check_password_hash(user.password, request.form['password']):
             session['user'] = user.username
             session['role'] = user.role
             return redirect(url_for('dashboard'))
-        else:
-            flash('Login inválido')
+
+        flash('Login inválido')
 
     return render_template('login.html')
 
@@ -128,23 +130,17 @@ def vendas():
     if 'user' not in session:
         return redirect(url_for('login'))
 
-    produtos = Product.query.all()
-    return render_template('vendas.html', produtos=produtos)
-
-# =========================
-# PRODUTO
-# =========================
+    return render_template('vendas.html', produtos=Product.query.all())
 
 @app.route('/produto/<int:id>')
 def produto(id):
     if 'user' not in session:
         return redirect(url_for('login'))
 
-    produto = Product.query.get_or_404(id)
-    return render_template('produto.html', produto=produto)
+    return render_template('produto.html', produto=Product.query.get_or_404(id))
 
 # =========================
-# ESTOQUE CADASTRO
+# ESTOQUE
 # =========================
 
 @app.route('/estoque/cadastrar', methods=['GET', 'POST'])
@@ -153,46 +149,33 @@ def cadastrar_produto():
         return redirect(url_for('login'))
 
     if request.method == 'POST':
-        modelo = request.form['modelo']
-        bateria = request.form['bateria']
-        ano = request.form['ano']
-        chassi = request.form['chassi']
-        valor = request.form['valor']
-        cor = request.form['cor']
-        autonomia = request.form['autonomia']
-        velocidade = request.form['velocidade']
-
         imagem = request.files.get('imagem')
-        caminho_imagem = None
+        caminho = None
 
-        if imagem and imagem.filename != '':
+        if imagem and imagem.filename:
             filename = secure_filename(imagem.filename)
-            caminho_imagem = os.path.join(app.config['UPLOAD_FOLDER'], filename)
-            imagem.save(caminho_imagem)
+            caminho = os.path.join(app.config['UPLOAD_FOLDER'], filename)
+            imagem.save(caminho)
 
-        novo_produto = Product(
-            modelo=modelo,
-            bateria=bateria,
-            ano=ano,
-            chassi=chassi,
-            valor=float(valor),
-            cor=cor,
-            autonomia=autonomia,
-            velocidade=velocidade,
-            imagem='/' + caminho_imagem if caminho_imagem else None
+        produto = Product(
+            modelo=request.form['modelo'],
+            bateria=request.form['bateria'],
+            ano=request.form['ano'],
+            chassi=request.form['chassi'],
+            valor=float(request.form['valor']),
+            cor=request.form['cor'],
+            autonomia=request.form['autonomia'],
+            velocidade=request.form['velocidade'],
+            imagem='/' + caminho if caminho else None
         )
 
-        db.session.add(novo_produto)
+        db.session.add(produto)
         db.session.commit()
 
-        flash('Produto cadastrado com sucesso!')
+        flash('Produto cadastrado!')
         return redirect(url_for('vendas'))
 
     return render_template('cadastrar_produto.html')
-
-# =========================
-# ESTOQUE LISTAGEM
-# =========================
 
 @app.route('/estoque')
 def estoque():
@@ -209,7 +192,7 @@ def estoque():
     return render_template('estoque.html', produtos=produtos)
 
 # =========================
-# OFICINA LISTAGEM
+# OFICINA
 # =========================
 
 @app.route('/oficina')
@@ -217,12 +200,7 @@ def oficina():
     if 'user' not in session:
         return redirect(url_for('login'))
 
-    servicos = Service.query.all()
-    return render_template('oficina.html', servicos=servicos)
-
-# =========================
-# OFICINA ENTRADA
-# =========================
+    return render_template('oficina.html', servicos=Service.query.all())
 
 @app.route('/oficina/entrada', methods=['GET', 'POST'])
 def oficina_entrada():
@@ -230,7 +208,7 @@ def oficina_entrada():
         return redirect(url_for('login'))
 
     if request.method == 'POST':
-        novo_servico = Service(
+        servico = Service(
             modelo=request.form['modelo'],
             servico=request.form['servico'],
             data_entrada=request.form['data_entrada'],
@@ -241,43 +219,77 @@ def oficina_entrada():
             status=request.form['status']
         )
 
-        db.session.add(novo_servico)
+        db.session.add(servico)
         db.session.commit()
 
-        flash('Ordem de serviço criada!')
+        flash('Serviço registrado!')
         return redirect(url_for('oficina'))
 
     return render_template('oficina_entrada.html')
 
 # =========================
-# PROTEÇÃO FINANCEIRO
+# FINANCEIRO
 # =========================
-
-@app.route('/financeiro_login', methods=['GET', 'POST'])
-def financeiro_login():
-    if request.method == 'POST':
-        username = request.form['username']
-        password = request.form['password']
-
-        user = User.query.filter_by(username=username).first()
-
-        if user and check_password_hash(user.password, password) and user.username == 'ADM1':
-            session['financeiro'] = True
-            return redirect(url_for('financeiro'))
-        else:
-            flash('Acesso negado ao financeiro')
-
-    return render_template('financeiro_login.html')
 
 @app.route('/financeiro')
 def financeiro():
     if not session.get('financeiro'):
         return redirect(url_for('financeiro_login'))
 
-    return render_template('financeiro.html')
+    dados = Finance.query.all()
+
+    entradas = sum(d.valor for d in dados if d.tipo == 'entrada')
+    saidas = sum(d.valor for d in dados if d.tipo == 'saida')
+    saldo = entradas - saidas
+
+    return render_template(
+        'financeiro.html',
+        dados=dados,
+        entradas=entradas,
+        saidas=saidas,
+        saldo=saldo
+    )
+
+@app.route('/financeiro/novo', methods=['GET', 'POST'])
+def financeiro_novo():
+    if not session.get('financeiro'):
+        return redirect(url_for('financeiro_login'))
+
+    if request.method == 'POST':
+        registro = Finance(
+            tipo=request.form['tipo'],
+            descricao=request.form['descricao'],
+            valor=float(request.form['valor']),
+            data=request.form['data']
+        )
+
+        db.session.add(registro)
+        db.session.commit()
+
+        flash('Registro financeiro adicionado!')
+        return redirect(url_for('financeiro'))
+
+    return render_template('financeiro_novo.html')
 
 # =========================
-# RODAR APP
+# LOGIN FINANCEIRO
+# =========================
+
+@app.route('/financeiro_login', methods=['GET', 'POST'])
+def financeiro_login():
+    if request.method == 'POST':
+        user = User.query.filter_by(username=request.form['username']).first()
+
+        if user and check_password_hash(user.password, request.form['password']) and user.username == 'ADM1':
+            session['financeiro'] = True
+            return redirect(url_for('financeiro'))
+
+        flash('Acesso negado')
+
+    return render_template('financeiro_login.html')
+
+# =========================
+# RUN
 # =========================
 
 if __name__ == '__main__':
