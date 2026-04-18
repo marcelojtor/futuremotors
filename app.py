@@ -43,6 +43,18 @@ class Product(db.Model):
     velocidade = db.Column(db.String(50))
     imagem = db.Column(db.String(200))
 
+# NOVO MODEL - OFICINA
+class Service(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    modelo = db.Column(db.String(100))
+    servico = db.Column(db.String(200))
+    data_entrada = db.Column(db.String(20))
+    data_saida = db.Column(db.String(20))
+    mao_obra = db.Column(db.Float)
+    pecas = db.Column(db.String(200))
+    valor_total = db.Column(db.Float)
+    status = db.Column(db.String(50))
+
 # =========================
 # CRIAR BANCO E USUÁRIO PADRÃO (CORRIGIDO)
 # =========================
@@ -179,7 +191,7 @@ def cadastrar_produto():
     return render_template('cadastrar_produto.html')
 
 # =========================
-# ESTOQUE LISTAGEM (NOVA ROTA)
+# ESTOQUE LISTAGEM
 # =========================
 
 @app.route('/estoque')
@@ -195,6 +207,47 @@ def estoque():
         produtos = Product.query.all()
 
     return render_template('estoque.html', produtos=produtos)
+
+# =========================
+# OFICINA LISTAGEM
+# =========================
+
+@app.route('/oficina')
+def oficina():
+    if 'user' not in session:
+        return redirect(url_for('login'))
+
+    servicos = Service.query.all()
+    return render_template('oficina.html', servicos=servicos)
+
+# =========================
+# OFICINA ENTRADA
+# =========================
+
+@app.route('/oficina/entrada', methods=['GET', 'POST'])
+def oficina_entrada():
+    if 'user' not in session:
+        return redirect(url_for('login'))
+
+    if request.method == 'POST':
+        novo_servico = Service(
+            modelo=request.form['modelo'],
+            servico=request.form['servico'],
+            data_entrada=request.form['data_entrada'],
+            data_saida=request.form['data_saida'],
+            mao_obra=float(request.form['mao_obra']),
+            pecas=request.form['pecas'],
+            valor_total=float(request.form['valor_total']),
+            status=request.form['status']
+        )
+
+        db.session.add(novo_servico)
+        db.session.commit()
+
+        flash('Ordem de serviço criada!')
+        return redirect(url_for('oficina'))
+
+    return render_template('oficina_entrada.html')
 
 # =========================
 # PROTEÇÃO FINANCEIRO
