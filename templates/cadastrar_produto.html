@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cadastrar Produto</title>
+
+    <!-- Bootstrap -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+
+    <!-- Ícones -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" rel="stylesheet">
+
+    <style>
+        body {
+            margin: 0;
+            background-color: #000;
+            color: #fff;
+        }
+
+        .sidebar {
+            width: 250px;
+            height: 100vh;
+            background: #111;
+            position: fixed;
+            padding-top: 20px;
+        }
+
+        .sidebar a {
+            display: block;
+            color: #fff;
+            padding: 12px 20px;
+            text-decoration: none;
+        }
+
+        .sidebar a:hover {
+            background: #222;
+        }
+
+        .content {
+            margin-left: 250px;
+            padding: 20px;
+        }
+
+        .card-form {
+            background: #111;
+            padding: 25px;
+            border-radius: 10px;
+        }
+
+        .form-control {
+            background: #222;
+            border: none;
+            color: #fff;
+        }
+
+        .form-control:focus {
+            background: #222;
+            color: #fff;
+            border: 1px solid #555;
+            box-shadow: none;
+        }
+
+        .preview-img {
+            width: 100%;
+            max-height: 250px;
+            object-fit: cover;
+            border-radius: 10px;
+            margin-top: 10px;
+        }
+
+        .btn-save {
+            background: #00c853;
+            border: none;
+            font-weight: bold;
+        }
+
+        .btn-save:hover {
+            background: #00e676;
+        }
+
+        @media (max-width: 768px) {
+            .sidebar {
+                display: none;
+            }
+
+            .content {
+                margin-left: 0;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+<!-- SIDEBAR -->
+<div class="sidebar">
+    <a href="/dashboard"><i class="fas fa-chart-line"></i> Dashboard</a>
+    <a href="/vendas"><i class="fas fa-shopping-cart"></i> Vendas</a>
+    <a href="/estoque/cadastrar"><i class="fas fa-box"></i> Estoque</a>
+    <a href="#"><i class="fas fa-tools"></i> Oficina</a>
+    <a href="/financeiro_login"><i class="fas fa-dollar-sign"></i> Financeiro</a>
+    <a href="#"><i class="fas fa-users"></i> Clientes</a>
+    <a href="#"><i class="fas fa-bullhorn"></i> Marketing</a>
+    <a href="#"><i class="fas fa-cog"></i> Configurações</a>
+</div>
+
+<!-- CONTENT -->
+<div class="content">
+
+    <h3>Cadastrar Produto</h3>
+
+    <!-- ALERTA -->
+    {% with messages = get_flashed_messages() %}
+        {% if messages %}
+            <div class="alert alert-success">
+                {{ messages[0] }}
+            </div>
+        {% endif %}
+    {% endwith %}
+
+    <div class="card-form mt-4">
+
+        <form method="POST" enctype="multipart/form-data">
+
+            <!-- FOTO -->
+            <div class="mb-3">
+                <label>📸 Foto do Produto</label>
+                <input type="file" name="imagem" class="form-control" accept="image/*" capture="environment" onchange="previewImage(event)">
+                <img id="preview" class="preview-img d-none">
+            </div>
+
+            <div class="row">
+
+                <div class="col-md-6 mb-3">
+                    <label>Modelo</label>
+                    <input type="text" name="modelo" class="form-control" required>
+                </div>
+
+                <div class="col-md-6 mb-3">
+                    <label>Tipo de Bateria</label>
+                    <input type="text" name="bateria" class="form-control">
+                </div>
+
+                <div class="col-md-4 mb-3">
+                    <label>Ano</label>
+                    <input type="text" name="ano" class="form-control">
+                </div>
+
+                <div class="col-md-4 mb-3">
+                    <label>Chassi</label>
+                    <input type="text" name="chassi" class="form-control">
+                </div>
+
+                <div class="col-md-4 mb-3">
+                    <label>Valor (R$)</label>
+                    <input type="number" name="valor" class="form-control" required>
+                </div>
+
+                <div class="col-md-4 mb-3">
+                    <label>Cor</label>
+                    <input type="text" name="cor" class="form-control">
+                </div>
+
+                <div class="col-md-4 mb-3">
+                    <label>Autonomia</label>
+                    <input type="text" name="autonomia" class="form-control">
+                </div>
+
+                <div class="col-md-4 mb-3">
+                    <label>Velocidade Máxima</label>
+                    <input type="text" name="velocidade" class="form-control">
+                </div>
+
+            </div>
+
+            <button type="submit" class="btn btn-save w-100">
+                <i class="fas fa-save"></i> Salvar Produto
+            </button>
+
+        </form>
+
+    </div>
+
+</div>
+
+<script>
+    function previewImage(event) {
+        let reader = new FileReader();
+        reader.onload = function () {
+            let output = document.getElementById('preview');
+            output.src = reader.result;
+            output.classList.remove('d-none');
+        };
+        reader.readAsDataURL(event.target.files[0]);
+    }
+</script>
+
+</body>
+</html>
