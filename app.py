@@ -2,12 +2,17 @@ import os
 from flask import Flask, render_template, request, redirect, url_for, session, flash
 from flask_sqlalchemy import SQLAlchemy
 from werkzeug.security import generate_password_hash, check_password_hash
+from werkzeug.utils import secure_filename
 
 # =========================
 # CONFIGURAÇÃO DO APP
 # =========================
 app = Flask(__name__)
 app.secret_key = 'super_secret_key_change_this'
+
+# Upload config
+UPLOAD_FOLDER = 'static/uploads'
+app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 
 # Banco SQLite (pronto para migrar para PostgreSQL)
 BASE_DIR = os.path.abspath(os.path.dirname(__file__))
@@ -43,6 +48,9 @@ class Product(db.Model):
 # =========================
 with app.app_context():
     db.create_all()
+
+    if not os.path.exists(UPLOAD_FOLDER):
+        os.makedirs(UPLOAD_FOLDER)
 
     if not User.query.filter_by(username='ADM').first():
         user = User(
@@ -112,7 +120,7 @@ def vendas():
     return render_template('vendas.html', produtos=produtos)
 
 # =========================
-# PRODUTO (NOVA ROTA)
+# PRODUTO
 # =========================
 
 @app.route('/produto/<int:id>')
@@ -122,6 +130,53 @@ def produto(id):
 
     produto = Product.query.get_or_404(id)
     return render_template('produto.html', produto=produto)
+
+# =========================
+# ESTOQUE (NOVA ROTA)
+# =========================
+
+@app.route('/estoque/cadastrar', methods=['GET', 'POST'])
+def cadastrar_produto():
+    if 'user' not in session:
+        return redirect(url_for('login'))
+
+    if request.method == 'POST':
+        modelo = request.form['modelo']
+        bateria = request.form['bateria']
+        ano = request.form['ano']
+        chassi = request.form['chassi']
+        valor = request.form['valor']
+        cor = request.form['cor']
+        autonomia = request.form['autonomia']
+        velocidade = request.form['velocidade']
+
+        imagem = request.files.get('imagem')
+        caminho_imagem = None
+
+        if imagem and imagem.filename != '':
+            filename = secure_filename(imagem.filename)
+            caminho_imagem = os.path.join(app.config['UPLOAD_FOLDER'], filename)
+            imagem.save(caminho_imagem)
+
+        novo_produto = Product(
+            modelo=modelo,
+            bateria=bateria,
+            ano=ano,
+            chassi=chassi,
+            valor=float(valor),
+            cor=cor,
+            autonomia=autonomia,
+            velocidade=velocidade,
+            imagem='/' + caminho_imagem if caminho_imagem else None
+        )
+
+        db.session.add(novo_produto)
+        db.session.commit()
+
+        flash('Produto cadastrado com sucesso!')
+        return redirect(url_for('vendas'))
+
+    return render_template('cadastrar_produto.html')
 
 # =========================
 # PROTEÇÃO FINANCEIRO
