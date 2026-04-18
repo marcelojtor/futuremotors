@@ -54,17 +54,13 @@ class Service(db.Model):
     valor_total = db.Column(db.Float)
     status = db.Column(db.String(50))
 
-# NOVO MODEL FINANCEIRO
 class Finance(db.Model):
     id = db.Column(db.Integer, primary_key=True)
-    tipo = db.Column(db.String(20))  # entrada / saida
+    tipo = db.Column(db.String(20))
     descricao = db.Column(db.String(200))
     valor = db.Column(db.Float)
     data = db.Column(db.String(20))
 
-# =========================
-# NOVO MODEL CLIENTES
-# =========================
 class Client(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     nome = db.Column(db.String(100))
@@ -73,6 +69,14 @@ class Client(db.Model):
     data_visita = db.Column(db.String(20))
     interesse = db.Column(db.String(100))
     observacoes = db.Column(db.String(300))
+
+# NOVO MODEL MARKETING
+class Marketing(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    valor_investido = db.Column(db.Float)
+    canal = db.Column(db.String(100))
+    retorno = db.Column(db.Float)
+    data = db.Column(db.String(20))
 
 # =========================
 # INIT BANCO
@@ -240,7 +244,7 @@ def oficina_entrada():
     return render_template('oficina_entrada.html')
 
 # =========================
-# CLIENTES (NOVO MÓDULO)
+# CLIENTES
 # =========================
 
 @app.route('/clientes')
@@ -273,6 +277,50 @@ def cliente_novo():
         return redirect(url_for('clientes'))
 
     return render_template('cliente_novo.html')
+
+# =========================
+# MARKETING (NOVO)
+# =========================
+
+@app.route('/marketing')
+def marketing():
+    if 'user' not in session:
+        return redirect(url_for('login'))
+
+    dados = Marketing.query.all()
+
+    total_investido = sum(d.valor_investido for d in dados)
+    total_retorno = sum(d.retorno for d in dados)
+    lucro = total_retorno - total_investido
+
+    return render_template(
+        'marketing.html',
+        dados=dados,
+        investido=total_investido,
+        retorno=total_retorno,
+        lucro=lucro
+    )
+
+@app.route('/marketing/novo', methods=['GET', 'POST'])
+def marketing_novo():
+    if 'user' not in session:
+        return redirect(url_for('login'))
+
+    if request.method == 'POST':
+        registro = Marketing(
+            valor_investido=float(request.form['valor_investido']),
+            canal=request.form['canal'],
+            retorno=float(request.form['retorno']),
+            data=request.form['data']
+        )
+
+        db.session.add(registro)
+        db.session.commit()
+
+        flash('Campanha registrada!')
+        return redirect(url_for('marketing'))
+
+    return render_template('marketing_novo.html')
 
 # =========================
 # FINANCEIRO
