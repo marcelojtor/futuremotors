@@ -63,6 +63,18 @@ class Finance(db.Model):
     data = db.Column(db.String(20))
 
 # =========================
+# NOVO MODEL CLIENTES
+# =========================
+class Client(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    nome = db.Column(db.String(100))
+    endereco = db.Column(db.String(200))
+    telefone = db.Column(db.String(50))
+    data_visita = db.Column(db.String(20))
+    interesse = db.Column(db.String(100))
+    observacoes = db.Column(db.String(300))
+
+# =========================
 # INIT BANCO
 # =========================
 with app.app_context():
@@ -226,6 +238,41 @@ def oficina_entrada():
         return redirect(url_for('oficina'))
 
     return render_template('oficina_entrada.html')
+
+# =========================
+# CLIENTES (NOVO MÓDULO)
+# =========================
+
+@app.route('/clientes')
+def clientes():
+    if 'user' not in session:
+        return redirect(url_for('login'))
+
+    lista = Client.query.all()
+    return render_template('clientes.html', clientes=lista)
+
+@app.route('/clientes/novo', methods=['GET', 'POST'])
+def cliente_novo():
+    if 'user' not in session:
+        return redirect(url_for('login'))
+
+    if request.method == 'POST':
+        cliente = Client(
+            nome=request.form['nome'],
+            endereco=request.form['endereco'],
+            telefone=request.form['telefone'],
+            data_visita=request.form['data_visita'],
+            interesse=request.form['interesse'],
+            observacoes=request.form['observacoes']
+        )
+
+        db.session.add(cliente)
+        db.session.commit()
+
+        flash('Cliente cadastrado!')
+        return redirect(url_for('clientes'))
+
+    return render_template('cliente_novo.html')
 
 # =========================
 # FINANCEIRO
